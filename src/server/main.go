@@ -33,10 +33,10 @@ func main() {
 
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
-	fmt.Println("New connection from:", conn.RemoteAddr())
+	fmt.Println("Nova conexão de: ", conn.RemoteAddr())
 
 	message, _ := bufio.NewReader(conn).ReadString('\n')
-	fmt.Printf("Hash received: %v from %v", string(message), conn.RemoteAddr())
+	fmt.Printf("Hash recebido: %v de: %v", string(message), conn.RemoteAddr())
 
 	hash := string(message)
 	hash = hash[:len(hash)-1]
