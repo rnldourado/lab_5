@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
 	"net"
 	"sync"
@@ -34,21 +36,21 @@ func handleConnection(conn net.Conn) {
 	defer conn.Close()
 	fmt.Println("Nova conexão de: ", conn.RemoteAddr())
 
-	buf := make([]byte, 1024)
-	_, err := conn.Read(buf)
+	//buf := make([]byte, 1024)
+	buf, err := bufio.NewReader(conn).ReadString('\n')
 	if err != nil {
 		return
 	}
 
 	fmt.Println(buf)
-	//mutex.Lock()
-	//err = json.Unmarshal(buf, &hashes)
-	//mutex.Unlock()
-	//if err != nil {
-	//	fmt.Println("Erro ao decriptografar o arquivo: ", err)
-	//	//return
-	//}
-	//
+	mutex.Lock()
+	err = json.Unmarshal([]byte(buf), &hashes)
+	mutex.Unlock()
+	if err != nil {
+		fmt.Println("Erro ao decriptografar o arquivo: ", err)
+		return
+	}
+
 	//fmt.Println(hashes["870067c23728f0f86f0ca77091d1c60921a086caf23990c5ca38e8128b5e586e"])
 
 	//message, _ := bufio.NewReader(conn).ReadString('\n')

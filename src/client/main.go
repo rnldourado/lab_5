@@ -14,6 +14,35 @@ import (
 var fileHashes = make(map[string]string)
 
 func main() {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Digite o IP do server: ")
+	serverURI, _ := reader.ReadString('\n')
+
+	conn := join(strings.Trim(serverURI, "\n"))
+	if conn != nil {
+	}
+
+	//defer conn.Close()
+
+	for {
+		readed, _ := reader.ReadString('\n')
+		command := strings.Split(readed, " ")
+
+		switch command[0] {
+		case "search":
+			search(command[1], conn)
+		case "exit":
+			os.Exit(0)
+		}
+	}
+
+	//fmt.Fprintf(conn, text)
+
+	//message, _ := bufio.NewReader(conn).ReadString('\n')
+	//fmt.Print("Resposta do servidor: " + message)
+}
+
+/*
 	args := os.Args
 
 	if len(args) < 2 {
@@ -30,8 +59,7 @@ func main() {
 	} else {
 		help()
 	}
-
-}
+*/
 
 func help() {
 	fmt.Println("Uso: go run main.go join [serverip] seach [file hash]")
@@ -44,7 +72,7 @@ func join(serverURI string) *net.Conn {
 
 	if err != nil {
 		fmt.Println("Erro ao conectar ao servidor:", err)
-		return nil
+		os.Exit(1)
 	}
 
 	loadHashesFromDataset()
