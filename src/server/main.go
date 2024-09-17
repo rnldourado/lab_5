@@ -37,21 +37,25 @@ func handleConnection(conn net.Conn) {
 	fmt.Println("Nova conexão de: ", conn.RemoteAddr())
 
 	//buf := make([]byte, 1024)
+	//_, err := conn.Read(buf)
 	buf, err := bufio.NewReader(conn).ReadString('\n')
+	fmt.Println("Estou aqui!!!!")
 	if err != nil {
 		return
 	}
 
 	fmt.Println(buf)
-	mutex.Lock()
-	err = json.Unmarshal([]byte(buf), &hashes)
-	mutex.Unlock()
+	tempHashes := make(map[string][]net.Addr)
+	err = json.Unmarshal([]byte(buf), &tempHashes)
 	if err != nil {
 		fmt.Println("Erro ao decriptografar o arquivo: ", err)
-		return
+		//return
 	}
+	mutex.Lock()
+	hashStorage(tempHashes, conn.RemoteAddr())
+	mutex.Unlock()
 
-	//fmt.Println(hashes["870067c23728f0f86f0ca77091d1c60921a086caf23990c5ca38e8128b5e586e"])
+	fmt.Println(hashes["870067c23728f0f86f0ca77091d1c60921a086caf23990c5ca38e8128b5e586e"])
 
 	//message, _ := bufio.NewReader(conn).ReadString('\n')
 	//fmt.Printf("Hash recebido: %v de: %v", string(message), conn.RemoteAddr())
@@ -72,4 +76,10 @@ func handleConnection(conn net.Conn) {
 
 	//fmt.Printf("Hash recebido: %v de %v\n", hash, conn.RemoteAddr())
 	//conn.Write([]byte(response + "\n"))
+}
+
+func hashStorage(tempHashes map[string][]net.Addr, addr net.Addr) {
+	for hash, _ := range tempHashes {
+		hashes[hash] = append(hashes[hash], addr)
+	}
 }

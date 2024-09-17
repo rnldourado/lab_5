@@ -11,6 +11,8 @@ import (
 	"github.com/rnldourado/lab_5/src/util"
 )
 
+const IP = "127.0.0.1:13000"
+
 var fileHashes = make(map[string]string)
 
 func main() {
@@ -22,6 +24,8 @@ func main() {
 	if conn != nil {
 	}
 
+	loadHashesFromDataset()
+	sendHashToServer(fileHashes, *conn)
 	//defer conn.Close()
 
 	for {
@@ -32,7 +36,7 @@ func main() {
 		case "search":
 			search(command[1], conn)
 		case "exit":
-			os.Exit(0)
+			os.Exit(1)
 		}
 	}
 
@@ -68,15 +72,13 @@ func help() {
 
 func join(serverURI string) *net.Conn {
 
-	conn, err := net.Dial("tcp", strings.Trim(serverURI, "\n"))
+	conn, err := net.Dial("tcp", IP)
+	//conn, err := net.Dial("tcp", strings.Trim(serverURI, "\n"))
 
 	if err != nil {
 		fmt.Println("Erro ao conectar ao servidor:", err)
 		os.Exit(1)
 	}
-
-	loadHashesFromDataset()
-	sendHashToServer(fileHashes, conn)
 
 	return &conn
 }
@@ -126,10 +128,12 @@ func sendHashToServer(fileHashes map[string]string, conn net.Conn) error {
 	}
 	fmt.Println(jsonData)
 	_, err = conn.Write(jsonData)
+	fmt.Fprintf(conn, "\n")
 	if err != nil {
 		fmt.Println("Erro ao enviar ao servidor: ", err)
 		return err
 	}
+	//fmt.Println("Cheguei aqui")
 
 	return nil
 }
