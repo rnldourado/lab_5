@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"net"
 	"sync"
@@ -35,23 +34,40 @@ func handleConnection(conn net.Conn) {
 	defer conn.Close()
 	fmt.Println("Nova conexão de: ", conn.RemoteAddr())
 
-	message, _ := bufio.NewReader(conn).ReadString('\n')
-	fmt.Printf("Hash recebido: %v de: %v", string(message), conn.RemoteAddr())
-
-	hash := string(message)
-	hash = hash[:len(hash)-1]
-
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	hashes[hash] = append(hashes[hash], conn.RemoteAddr())
-
-	ipList := hashes[hash]
-	response := "Endereços IPs que possuem o arquivo: "
-	for _, addr := range ipList {
-		response += fmt.Sprintf("%v ", addr.String())
+	buf := make([]byte, 1024)
+	_, err := conn.Read(buf)
+	if err != nil {
+		return
 	}
 
-	fmt.Printf("Hash recebido: %v de %v\n", hash, conn.RemoteAddr())
-	conn.Write([]byte(response + "\n"))
+	fmt.Println(buf)
+	//mutex.Lock()
+	//err = json.Unmarshal(buf, &hashes)
+	//mutex.Unlock()
+	//if err != nil {
+	//	fmt.Println("Erro ao decriptografar o arquivo: ", err)
+	//	//return
+	//}
+	//
+	//fmt.Println(hashes["870067c23728f0f86f0ca77091d1c60921a086caf23990c5ca38e8128b5e586e"])
+
+	//message, _ := bufio.NewReader(conn).ReadString('\n')
+	//fmt.Printf("Hash recebido: %v de: %v", string(message), conn.RemoteAddr())
+
+	//hash := string(message)
+	//hash = hash[:len(hash)-1]
+
+	//mutex.Lock()
+	//defer mutex.Unlock()
+
+	//hashes[hash] = append(hashes[hash], conn.RemoteAddr())
+
+	//ipList := hashes[hash]
+	//response := "Endereços IPs que possuem o arquivo: "
+	//for _, addr := range ipList {
+	//	response += fmt.Sprintf("%v ", addr.String())
+	//}
+
+	//fmt.Printf("Hash recebido: %v de %v\n", hash, conn.RemoteAddr())
+	//conn.Write([]byte(response + "\n"))
 }
