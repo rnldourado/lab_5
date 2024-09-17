@@ -4,6 +4,12 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"sync"
+)
+
+var (
+	hashes = make(map[string][]net.Addr)
+	mutex  sync.Mutex
 )
 
 func main() {
@@ -30,7 +36,22 @@ func handleConnection(conn net.Conn) {
 	fmt.Println("New connection from:", conn.RemoteAddr())
 
 	message, _ := bufio.NewReader(conn).ReadString('\n')
-	fmt.Print("Mensage received: ", string(message))
+	fmt.Printf("Hash received: %v from %v", string(message), conn.RemoteAddr())
 
-	conn.Write([]byte("Mensage received: " + message))
+	hash := string(message)
+	hash = hash[:len(hash)-1]
+
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	hashes[hash] = append(hashes[hash], conn.RemoteAddr())
+
+	ipList := hashes[hash]
+	response := "Endereços IPs que possuem o arquivo: "
+	for _, addr := range ipList {
+		response += fmt.Sprintf("%v ", addr.String())
+	}
+
+	fmt.Printf("Hash recebido: %v de %v\n", hash, conn.RemoteAddr())
+	conn.Write([]byte(response + "\n"))
 }
