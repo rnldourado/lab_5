@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"os"
@@ -15,18 +16,17 @@ func main() {
 		return
 	}
 
-	var conn *net.Conn
 
 	if (args[1] == "help"){
 		help()
 	}else if (args[1] == "join" && args[3] == "search"){
-		conn = join(args[2])
-		fmt.Println(search(args[2]))
+		conn := join(args[2])
+		fmt.Print(search(args[4], conn))
+		// (*conn).Close()
 	}else{
 		help()
 	}
 
-	(*conn).Close()
 }
 
 func help() {
@@ -35,10 +35,6 @@ func help() {
 }
 
 func join(serverURI string) *net.Conn {
-	// reader := bufio.NewReader(os.Stdin)
-
-	// fmt.Print("Digite o IP do server: ")
-	// serverURI, _ := reader.ReadString('\n')
 
 	conn, err := net.Dial("tcp", strings.Trim(serverURI, "\n"))
 
@@ -48,16 +44,13 @@ func join(serverURI string) *net.Conn {
 	}
 
 	return &conn
-
-	// fmt.Print("Digite sua mensagem: ")
-	// text, _ := reader.ReadString('\n')
-	//
-	// fmt.Fprintf(conn, text)
-	//
-	// message, _ := bufio.NewReader(conn).ReadString('\n')
-	// fmt.Print("Resposta do servidor: " + message)
 }
 
-func search(hash string) []byte {
-	return []byte(hash)
+func search(hash string, conn *net.Conn) string {
+	defer (*conn).Close()
+	fmt.Fprintf(*conn, hash + "\n")
+	
+	message, _ := bufio.NewReader(*conn).ReadString('\n')
+
+	return "Resposta do servidor: \n" + message
 }

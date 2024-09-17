@@ -30,7 +30,7 @@ func handleConnection(conn net.Conn) {
 	fmt.Println("New connection from:", conn.RemoteAddr())
 
 	message, _ := bufio.NewReader(conn).ReadString('\n')
-	fmt.Print("Mensage received:", string(message))
+	fmt.Print("Mensage received: ", string(message))
 
 	conn.Write([]byte("Mensage received: " + message))
 }
