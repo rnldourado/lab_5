@@ -6,7 +6,10 @@ import (
 	"net"
 	"os"
 	"strings"
+	"github.com/rnldourado/lab_5/src/util"
 )
+
+var fileHashes = make(map[string]string)
 
 func main() {
 	args := os.Args
@@ -43,6 +46,8 @@ func join(serverURI string) *net.Conn {
 		return nil
 	}
 
+	loadHashesFromDataset()
+
 	return &conn
 }
 
@@ -54,3 +59,32 @@ func search(hash string, conn *net.Conn) string {
 
 	return "Resposta do servidor: \n" + message
 }
+
+func loadHashesFromDataset() {  
+	datasetPath := "/tmp/dataset"  
+	files, err := os.ReadDir(datasetPath)  
+	if err != nil {  
+		fmt.Println("Erro ao ler o diretório:", err)  
+		return  
+	}  
+
+	for _, file := range files {  
+		if !file.IsDir() {  
+			hash := calculateHash(file.Name()) 
+			fileHashes[hash] = datasetPath + "/" + file.Name() 
+		}  
+	}  
+}  
+
+func calculateHash(fileName string) string {  
+	filepath := "/tmp/dataset/" + fileName
+	hash, err := util.CalculateHash(filepath)
+	
+	if err != nil {
+		fmt.Println("Error ao calcular o hash do arquivo: ", err)
+		return ""
+	}
+
+	return hash
+}  
+

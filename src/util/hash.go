@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func calculateHash(filePath string) (string, error) {
+func CalculateHash(filePath string) (string, error) {
 	// Abre o arquivo
 	file, err := os.Open(filePath)
 	if err != nil {
