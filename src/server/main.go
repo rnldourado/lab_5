@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 )
 
@@ -70,6 +71,14 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 
+		message = strings.TrimSpace(message)
+		command := strings.Fields(message)
+
+		switch command[0] {
+		case "search":
+			search(command[1], conn)
+		}
+
 		fmt.Println(message)
 
 	}
@@ -107,6 +116,30 @@ func welcome(conn net.Conn) {
 	if err != nil {
 		fmt.Println("Erro ao enviar mensagem ao cliente:", err)
 		return
+	}
+}
+
+func search(hash string, conn net.Conn) {
+	addresses, ok := hashes[hash]
+	if !ok {
+	} else {
+
+		var sAddr []string
+		for _, adrr := range addresses {
+			sAddr = append(sAddr, adrr.String())
+		}
+
+		jsonResponse, err := json.Marshal(sAddr)
+		if err != nil {
+			fmt.Println("Erro ao serializar: ", err)
+			return
+		}
+		_, err = conn.Write(append(jsonResponse, '\n'))
+		fmt.Fprintf(conn, "\n")
+		if err != nil {
+			fmt.Println("Erro ao enviar resposta ao cliente: ", err)
+			return
+		}
 	}
 }
 

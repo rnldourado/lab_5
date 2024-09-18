@@ -29,6 +29,7 @@ func main() {
 	//defer conn.Close()
 
 	for {
+		fmt.Print("> ")
 		command, _ := reader.ReadString('\n')
 		command = strings.TrimSpace(command)
 		parts := strings.Fields(command)
@@ -37,7 +38,7 @@ func main() {
 		case "files":
 			files()
 		case "search":
-			search(parts[1], conn)
+			search(parts[1], *conn)
 		case "exit":
 			fmt.Println("Até Logo!")
 			return
@@ -90,18 +91,32 @@ func join(serverURI string) *net.Conn {
 		return nil
 	}
 
-	fmt.Println(message)
+	fmt.Print(message)
 
 	return &conn
 }
 
-func search(hash string, conn *net.Conn) string {
-	defer (*conn).Close()
-	fmt.Fprintf(*conn, hash+"\n")
+func search(hash string, conn net.Conn) {
 
-	message, _ := bufio.NewReader(*conn).ReadString('\n')
+	_, err := conn.Write([]byte(fmt.Sprintf("search %s\n", hash)))
+	if err != nil {
+		fmt.Println("Erro ao enviar o comando de busca:", err)
+		return
+	}
 
-	return "Resposta do servidor: \n" + message
+	response, err := bufio.NewReader(conn).ReadString('\n')
+	if err != nil {
+		fmt.Println("Erro ao ler a resposta do servidor:", err)
+	}
+
+	var addresses []string
+	err = json.Unmarshal([]byte(response), &addresses)
+	if err != nil {
+		fmt.Println("Erro ao desserializar a resposta:", err)
+	}
+
+	fmt.Println("Endereços com o arquivo:", addresses)
+
 }
 
 func loadHashesFromDataset() {
