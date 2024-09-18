@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -36,21 +35,24 @@ func handleConnection(conn net.Conn) {
 	defer conn.Close()
 	fmt.Println("Nova conexão de: ", conn.RemoteAddr())
 
-	//buf := make([]byte, 1024)
-	//_, err := conn.Read(buf)
-	buf, err := bufio.NewReader(conn).ReadString('\n')
-	fmt.Println("Estou aqui!!!!")
+	welcome(conn)
+
+	buf := make([]byte, 1024)
+	n, err := conn.Read(buf[:])
 	if err != nil {
 		return
 	}
 
+	data := buf[:n]
+
 	fmt.Println(buf)
-	tempHashes := make(map[string][]net.Addr)
-	err = json.Unmarshal([]byte(buf), &tempHashes)
+	tempHashes := make(map[string]string)
+	err = json.Unmarshal(data, &tempHashes)
 	if err != nil {
 		fmt.Println("Erro ao decriptografar o arquivo: ", err)
-		//return
+		return
 	}
+
 	mutex.Lock()
 	hashStorage(tempHashes, conn.RemoteAddr())
 	mutex.Unlock()
@@ -78,8 +80,17 @@ func handleConnection(conn net.Conn) {
 	//conn.Write([]byte(response + "\n"))
 }
 
-func hashStorage(tempHashes map[string][]net.Addr, addr net.Addr) {
+func hashStorage(tempHashes map[string]string, addr net.Addr) {
 	for hash, _ := range tempHashes {
 		hashes[hash] = append(hashes[hash], addr)
+	}
+}
+
+func welcome(conn net.Conn) {
+	mensagem := "Bem-vindo ao servidor!\n"
+	_, err := conn.Write([]byte(mensagem))
+	if err != nil {
+		fmt.Println("Erro ao enviar mensagem ao cliente:", err)
+		return
 	}
 }

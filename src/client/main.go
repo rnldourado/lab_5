@@ -29,14 +29,16 @@ func main() {
 	//defer conn.Close()
 
 	for {
-		readed, _ := reader.ReadString('\n')
-		command := strings.Split(readed, " ")
+		command, _ := reader.ReadString('\n')
+		command = strings.TrimSpace(command)
+		parts := strings.Fields(command)
 
-		switch command[0] {
+		switch parts[0] {
 		case "search":
-			search(command[1], conn)
+			search(parts[1], conn)
 		case "exit":
-			os.Exit(1)
+			fmt.Println("Até Logo!")
+			return
 		}
 	}
 
@@ -79,6 +81,14 @@ func join(serverURI string) *net.Conn {
 		fmt.Println("Erro ao conectar ao servidor:", err)
 		os.Exit(1)
 	}
+
+	message, err := bufio.NewReader(conn).ReadString('\n')
+	if err != nil {
+		fmt.Println("Erro ao ler mensagem do servidor:", err)
+		return nil
+	}
+
+	fmt.Println(message)
 
 	return &conn
 }
@@ -126,7 +136,7 @@ func sendHashToServer(fileHashes map[string]string, conn net.Conn) error {
 		fmt.Println("Erro ao serializar: ", err)
 		return err
 	}
-	fmt.Println(jsonData)
+	//fmt.Println(jsonData)
 	_, err = conn.Write(jsonData)
 	fmt.Fprintf(conn, "\n")
 	if err != nil {
