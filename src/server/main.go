@@ -66,6 +66,7 @@ func handleConnection(conn net.Conn) {
 		message, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Println("Cliente desconectado: ", conn.RemoteAddr())
+			removeClientFiles(conn.RemoteAddr())
 			return
 		}
 
@@ -107,4 +108,25 @@ func welcome(conn net.Conn) {
 		fmt.Println("Erro ao enviar mensagem ao cliente:", err)
 		return
 	}
+}
+
+func removeClientFiles(addr net.Addr) {
+
+	for hash, owners := range hashes {
+
+		var updatedOwners []net.Addr
+		for _, owner := range owners {
+			if owner.String() != addr.String() {
+				updatedOwners = append(updatedOwners, owner)
+			}
+		}
+
+		if len(updatedOwners) > 0 {
+			hashes[hash] = updatedOwners
+		} else {
+			delete(hashes, hash)
+		}
+	}
+
+	fmt.Printf("Tabela atualizada! Registros de %s excluidos!\n", addr.String())
 }
