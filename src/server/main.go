@@ -57,7 +57,7 @@ func handleConnection(conn net.Conn) {
 	hashStorage(tempHashes, conn.RemoteAddr())
 	mutex.Unlock()
 
-	fmt.Println(hashes["870067c23728f0f86f0ca77091d1c60921a086caf23990c5ca38e8128b5e586e"])
+	fmt.Println(hashes["b8696ddcb191628675c8667cad61444fb8a367bdabed66053f06fc579ddc3804"])
 
 	//message, _ := bufio.NewReader(conn).ReadString('\n')
 	//fmt.Printf("Hash recebido: %v de: %v", string(message), conn.RemoteAddr())

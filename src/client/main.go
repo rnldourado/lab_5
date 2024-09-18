@@ -34,6 +34,8 @@ func main() {
 		parts := strings.Fields(command)
 
 		switch parts[0] {
+		case "files":
+			files()
 		case "search":
 			search(parts[1], conn)
 		case "exit":
@@ -146,4 +148,11 @@ func sendHashToServer(fileHashes map[string]string, conn net.Conn) error {
 	//fmt.Println("Cheguei aqui")
 
 	return nil
+}
+
+func files() {
+	for hash, name := range fileHashes {
+		fmt.Println("Arquivo: ", name)
+		fmt.Printf("Hash: %s\n", hash)
+	}
 }
