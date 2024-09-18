@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -45,7 +46,7 @@ func handleConnection(conn net.Conn) {
 
 	data := buf[:n]
 
-	fmt.Println(buf)
+	//fmt.Println(buf)
 	tempHashes := make(map[string]string)
 	err = json.Unmarshal(data, &tempHashes)
 	if err != nil {
@@ -57,7 +58,20 @@ func handleConnection(conn net.Conn) {
 	hashStorage(tempHashes, conn.RemoteAddr())
 	mutex.Unlock()
 
-	fmt.Println(hashes["b8696ddcb191628675c8667cad61444fb8a367bdabed66053f06fc579ddc3804"])
+	//fmt.Println(hashes["b8696ddcb191628675c8667cad61444fb8a367bdabed66053f06fc579ddc3804"])
+
+	for {
+		reader := bufio.NewReader(conn)
+
+		message, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Println("Cliente desconectado: ", conn.RemoteAddr())
+			return
+		}
+
+		fmt.Println(message)
+
+	}
 
 	//message, _ := bufio.NewReader(conn).ReadString('\n')
 	//fmt.Printf("Hash recebido: %v de: %v", string(message), conn.RemoteAddr())
