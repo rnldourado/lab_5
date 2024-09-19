@@ -4,6 +4,13 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"strings"
+	"sync"
+)
+
+var (
+	clients = make(map[string][]string)
+	mutex   sync.Mutex
 )
 
 func main() {
@@ -27,10 +34,55 @@ func main() {
 
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
-	fmt.Println("New connection from:", conn.RemoteAddr())
+	clientAddr := conn.RemoteAddr().String()
 
-	message, _ := bufio.NewReader(conn).ReadString('\n')
-	fmt.Print("Mensage received:", string(message))
+	fmt.Println("Nova conexão de: ", conn.RemoteAddr())
 
-	conn.Write([]byte("Mensage received: " + message))
+	hashes, _ := bufio.NewReader(conn).ReadString('\n')
+	hashes = strings.TrimSpace(hashes)
+	clientHashes := strings.Split(hashes, ",")
+
+	mutex.Lock()
+	clients[clientAddr] = clientHashes
+	mutex.Unlock()
+
+	for {
+		requestedHash, err := bufio.NewReader(conn).ReadString('\n')
+		if err != nil {
+			fmt.Printf("Cliente %s desconectado\n", clientAddr)
+			mutex.Lock()
+			delete(clients, clientAddr)
+			mutex.Unlock()
+			return
+		}
+		requestedHash = strings.TrimSpace(requestedHash)
+
+		clientsWithFile := findClientsWithHash(requestedHash)
+
+		var response string
+
+		if len(clientsWithFile) > 0 {
+			response = "Clientes com o arquivo:\n" + strings.Join(clientsWithFile, "\n")
+			fmt.Println(response)
+		} else {
+			response = "Nenhum cliente possui o arquivo com o hash solicitado."
+		}
+
+		conn.Write([]byte(response + "\nEOF\n"))
+	}
+}
+
+func findClientsWithHash(hash string) []string {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	var clientsWithFile []string
+	for client, hashes := range clients {
+		for _, clientHash := range hashes {
+			if clientHash == hash {
+				clientsWithFile = append(clientsWithFile, client)
+			}
+		}
+	}
+	return clientsWithFile
 }
