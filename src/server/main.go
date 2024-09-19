@@ -47,7 +47,6 @@ func handleConnection(conn net.Conn) {
 
 	data := buf[:n]
 
-	//fmt.Println(buf)
 	tempHashes := make(map[string]string)
 	err = json.Unmarshal(data, &tempHashes)
 	if err != nil {
@@ -58,8 +57,6 @@ func handleConnection(conn net.Conn) {
 	mutex.Lock()
 	hashStorage(tempHashes, conn.RemoteAddr())
 	mutex.Unlock()
-
-	//fmt.Println(hashes["b8696ddcb191628675c8667cad61444fb8a367bdabed66053f06fc579ddc3804"])
 
 	for {
 		reader := bufio.NewReader(conn)
@@ -83,25 +80,6 @@ func handleConnection(conn net.Conn) {
 
 	}
 
-	//message, _ := bufio.NewReader(conn).ReadString('\n')
-	//fmt.Printf("Hash recebido: %v de: %v", string(message), conn.RemoteAddr())
-
-	//hash := string(message)
-	//hash = hash[:len(hash)-1]
-
-	//mutex.Lock()
-	//defer mutex.Unlock()
-
-	//hashes[hash] = append(hashes[hash], conn.RemoteAddr())
-
-	//ipList := hashes[hash]
-	//response := "Endereços IPs que possuem o arquivo: "
-	//for _, addr := range ipList {
-	//	response += fmt.Sprintf("%v ", addr.String())
-	//}
-
-	//fmt.Printf("Hash recebido: %v de %v\n", hash, conn.RemoteAddr())
-	//conn.Write([]byte(response + "\n"))
 }
 
 func hashStorage(tempHashes map[string]string, addr net.Addr) {
