@@ -4,7 +4,7 @@
 nfiles=$1
 
 # File size in megabytes
-file_size_mb=10
+file_size_mb=1
 
 mkdir -p dataset
 
