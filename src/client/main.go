@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"net"
 	"os"
@@ -11,99 +10,78 @@ import (
 	"github.com/rnldourado/lab_5/src/util"
 )
 
-const IP = "127.0.0.1:13000"
-
 var fileHashes = make(map[string]string)
 
 func main() {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Digite o IP do server: ")
-	serverURI, _ := reader.ReadString('\n')
 
-	conn := join(strings.Trim(serverURI, "\n"))
-	if conn != nil {
-	}
-
-	loadHashesFromDataset()
-	sendHashToServer(fileHashes, *conn)
-	//defer conn.Close()
-
-	for {
-		fmt.Print("> ")
-		command, _ := reader.ReadString('\n')
-		command = strings.TrimSpace(command)
-		parts := strings.Fields(command)
-
-		switch parts[0] {
-		case "files":
-			files()
-		case "search":
-			search(parts[1], *conn)
-		case "exit":
-			fmt.Println("Até Logo!")
-			return
-		}
-	}
-}
-
-func join(serverURI string) *net.Conn {
-
-	//conn, err := net.Dial("tcp", IP)
-	conn, err := net.Dial("tcp", strings.Trim(serverURI, "\n"))
-
-	if err != nil {
-		fmt.Println("Erro ao conectar ao servidor:", err)
-		os.Exit(1)
-	}
-
-	message, err := bufio.NewReader(conn).ReadString('\n')
-	if err != nil {
-		fmt.Println("Erro ao ler mensagem do servidor:", err)
-		return nil
-	}
-
-	fmt.Print(message)
-
-	return &conn
-}
-
-func search(hash string, conn net.Conn) {
-
-	_, err := conn.Write([]byte(fmt.Sprintf("search %s\n", hash)))
-	if err != nil {
-		fmt.Println("Erro ao enviar o comando de busca:", err)
+	if len(os.Args) != 2 {
+		fmt.Println("Uso: go run client.go [serverip:port]")
 		return
 	}
 
-	response, err := bufio.NewReader(conn).ReadString('\n')
-	if err != nil {
-		fmt.Println("Erro ao ler a resposta do servidor:", err)
-	}
+	serverAddress := os.Args[1]
 
-	var addresses []string
-	err = json.Unmarshal([]byte(response), &addresses)
+	conn, err := net.Dial("tcp", serverAddress)
 	if err != nil {
-		fmt.Println("Erro ao desserializar a resposta:", err)
+		fmt.Println("Erro ao conectar ao servidor:", err)
+		return
 	}
+	defer conn.Close()
 
-	fmt.Println("Endereços com o arquivo:", addresses)
+	hashes := loadHashesFromDataset()
+	fmt.Fprintf(conn, strings.Join(hashes, ",")+"\n")
+
+	fmt.Println("Conectado ao servidor.")
+
+	for {
+		fmt.Print("('ls' para listar os seus aqruivos ou 'exit' para sair).\nDigite o hash para buscar: ")
+		reader := bufio.NewReader(os.Stdin)
+		hash, _ := reader.ReadString('\n')
+		hash = strings.TrimSpace(hash)
+
+		if hash == "exit" {
+			fmt.Println("Encerrando conexão.")
+			break
+		} else if hash == "ls" {
+			files()
+		} else {
+			fmt.Fprintf(conn, hash+"\n")
+
+			scanner := bufio.NewScanner(conn)
+
+			for scanner.Scan() {
+				line := scanner.Text()
+				if strings.Trim(line, "EOF") == "" {
+					break
+				}
+				fmt.Println(line)
+			}
+
+		}
+	}
 
 }
 
-func loadHashesFromDataset() {
+func loadHashesFromDataset() []string {
+	var fileHashes []string
 	datasetPath := "/tmp/dataset"
+
 	files, err := os.ReadDir(datasetPath)
 	if err != nil {
 		fmt.Println("Erro ao ler o diretório:", err)
-		return
+		return fileHashes
 	}
 
 	for _, file := range files {
 		if !file.IsDir() {
-			hash := calculateHash(file.Name())
-			fileHashes[hash] = datasetPath + "/" + file.Name()
+			filePath := datasetPath + "/" + file.Name()
+			hash, err := util.CalculateHash(filePath)
+			if err == nil {
+				fileHashes = append(fileHashes, hash)
+			}
 		}
 	}
+	return fileHashes
 }
 
 func calculateHash(fileName string) string {
@@ -118,25 +96,25 @@ func calculateHash(fileName string) string {
 	return hash
 }
 
-func sendHashToServer(fileHashes map[string]string, conn net.Conn) error {
-	jsonData, err := json.Marshal(fileHashes)
-	if err != nil {
-		fmt.Println("Erro ao serializar: ", err)
-		return err
-	}
-	_, err = conn.Write(jsonData)
-	fmt.Fprintf(conn, "\n")
-	if err != nil {
-		fmt.Println("Erro ao enviar ao servidor: ", err)
-		return err
-	}
-
-	return nil
-}
-
 func files() {
-	for hash, name := range fileHashes {
-		fmt.Println("Arquivo: ", name)
-		fmt.Printf("Hash: %s\n", hash)
+	datasetPath := "/tmp/dataset"
+
+	files, err := os.ReadDir(datasetPath)
+	if err != nil {
+		fmt.Println("Erro ao ler o diretório:", err)
+		return
+	}
+
+	for _, file := range files {
+		if !file.IsDir() {
+			filePath := datasetPath + "/" + file.Name()
+			hash, err := util.CalculateHash(filePath)
+			if err == nil {
+				fmt.Println("Arquivo: ", file.Name())
+				fmt.Printf("Hash: %s\n", hash)
+			} else {
+				fmt.Println("Erro ao calcular o hash para o arquivo:", file.Name())
+			}
+		}
 	}
 }
